@@ -1,0 +1,52 @@
+package org.arvin.handler;
+
+import cn.hutool.db.nosql.redis.RedisDS;
+import cn.hutool.jwt.JWTUtil;
+import com.alibaba.fastjson.JSON;
+import org.arvin.api.CommonResult;
+import org.arvin.constant.RedisKey;
+import org.arvin.constant.TokenHeader;
+import org.arvin.dto.SysUserDTO;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.stereotype.Component;
+import redis.clients.jedis.Jedis;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+@Component
+public class AdminAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
+    @Override
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+        //拿到登录用户信息
+        SysUserDTO userDetails = (SysUserDTO)authentication.getPrincipal();
+
+        //生成jwt(token)
+        Map<String, Object> map = new HashMap<>();
+        map.put("uid", userDetails.getSysUser().getId());
+        map.put("expire_time", System.currentTimeMillis() + 1000 * 60 * 60 * 24 * 15);
+        String jwtToken = JWTUtil.createToken(map, "1234".getBytes());
+
+        //将用户信息保存到redis
+        Jedis jedis = RedisDS.create().getJedis();
+        String key = RedisKey.ADMIN_USER_INFO + userDetails.getSysUser().getId().toString();
+        jedis.set(key, JSON.toJSONString(userDetails));
+
+        //当前token也保存到redis//单点登录
+        jedis.set(RedisKey.ADMIN_USER_TOKEN + userDetails.getSysUser().getId().toString(),jwtToken);
+
+        Map<String,Object> resultMap = new HashMap<>();
+        resultMap.put("token", TokenHeader.ADMIN_TOKEN_PREFIX+jwtToken);
+
+        //输出结果
+        response.setCharacterEncoding("utf-8");
+        response.setContentType("application/json");
+        response.getWriter().write(JSON.toJSONString(CommonResult.success(resultMap)));
+
+    }
+}

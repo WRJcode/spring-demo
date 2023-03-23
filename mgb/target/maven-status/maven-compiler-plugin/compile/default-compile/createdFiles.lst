@@ -1,0 +1,13 @@
+org\arvin\generator\BaseGenerator.class
+org\arvin\App.class
+org\arvin\mapper\SysMenuMapper.class
+org\arvin\mapper\SysUserMapper.class
+org\arvin\mapper\SysUserRoleMapper.class
+org\arvin\pojo\SysRole.class
+org\arvin\pojo\SysUserRole.class
+org\arvin\mapper\SysRoleMapper.class
+org\arvin\mapper\SysRoleMenuMapper.class
+org\arvin\pojo\SysUser.class
+org\arvin\generator\MySQLGenerator.class
+org\arvin\pojo\SysRoleMenu.class
+org\arvin\pojo\SysMenu.class
